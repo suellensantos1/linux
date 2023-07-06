@@ -1,0 +1,65 @@
+#!/bin/bash
+
+D="vendas_diarias"
+F="$D/vendas_$(date +"%Y-%m-%d").txt"
+
+if [ ! -d "$D" ]; then
+  mkdir -p "$D"
+fi
+
+if [ ! -f "$F" ]; then
+  touch "$F"
+fi
+
+L() { awk -F, '{print $0}' "$1"; }
+W() { echo -e "$@" > "$F"; }
+
+adicionar_transacao() {
+  read -p "Nome do vendedor: " v
+  read -p "Quantidade de peças: " q
+  read -p "Valor total da venda: " vt
+  h=$(date +"%H:%M:%S")
+  t="$h,$v,$q,$vt"
+  W "$(L "$F")\n$t"
+  echo "Transação adicionada com sucesso!"
+}
+
+exibir_relatorio() {
+  d=$(L "$F")
+  tp=0
+  tv=0
+  echo -e "\nRelatório de Vendas Diárias - $(date +"%Y-%m-%d")\n-----------------------------------"
+  echo "Hora      Vendedor   Qtde. Peças   Valor Total\n-----------------------------------"
+  echo -e "$d" | awk -F, -vOFS='\t' '{tp+=$3; tv+=$4; print $1,$2,$3,$4}'
+  echo "-----------------------------------"
+  echo -e "Total:\t\t$tp\t\t$tv\n"
+}
+
+buscar_arquivo() {
+  read -p "Digite a data (AAAA-MM-DD) do arquivo de vendas a ser buscado: " db
+  af="$D/vendas_$db.txt"
+  if [ -f "$af" ]; then
+    echo -e "\nArquivo de Vendas - $db\n-------------------------------"
+    cat "$af"
+    echo "-------------------------------"
+  else
+    echo "Arquivo de vendas não encontrado para a data $db."
+  fi
+}
+
+while true; do
+  echo -e "\n===== Controle de Vendas Diárias ====="
+  echo "1 - Adicionar Transação"
+  echo "2 - Exibir Relatório Diário"
+  echo "3 - Buscar Arquivo de Vendas"
+  echo "0 - Sair"
+  read -p "Digite a opção desejada: " o
+
+  case $o in
+    1) adicionar_transacao ;;
+    2) exibir_relatorio ;;
+    3) buscar_arquivo ;;
+    0) break ;;
+    *) echo "Opção inválida. Por favor, tente novamente." ;;
+  esac
+done
